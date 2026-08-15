@@ -1,5 +1,5 @@
 import { controller } from '../../common/http/controller.ts';
-import type { GetAllUsersRoute, PostUserRoute } from './user.dto.ts';
+import type { GetAllUsersRoute, PostUserRoute } from './user.contract.ts';
 import { userService } from './user.module.ts';
 import { userRequest } from './user.schema.ts';
 
