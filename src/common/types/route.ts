@@ -1,4 +1,3 @@
-import type { ZodObject } from 'zod';
 import type { BodyMethod, ContentType, HttpMethod, Query } from './http.ts';
 
 export interface ParamsDictionary {
@@ -36,7 +35,7 @@ export type RouteDefinition<
   TMethod extends HttpMethod,
   TPath extends string = string,
   //   TAuthPermission extends Permissions | SpecialPermission = '-Public-',
-  TSchema extends ZodObject | false = false,
+  TSchema extends true | false = false,
   TBody = any,
   TResponse = any,
   TQuery = Query,
@@ -56,7 +55,7 @@ export type RouteDefinition<
 export type AnyRoute = RouteDefinition<
   HttpMethod,
   string,
-  ZodObject | false,
+  true | false,
   unknown,
   unknown,
   Query,

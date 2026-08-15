@@ -1,6 +1,7 @@
 import { controller } from '../../common/http/controller.ts';
-import type { GetAllUsersRoute } from './user.dto.ts';
+import type { GetAllUsersRoute, PostUserRoute } from './user.dto.ts';
 import { userService } from './user.module.ts';
+import { userRequest } from './user.schema.ts';
 
 export const getAllUsersController = controller<GetAllUsersRoute>(
   'get',
@@ -8,6 +9,17 @@ export const getAllUsersController = controller<GetAllUsersRoute>(
   false,
   async () => {
     const data = await userService.getAll();
+
+    return { data };
+  },
+);
+
+export const postUsersController = controller<PostUserRoute>(
+  'post',
+  '',
+  userRequest(),
+  async (req) => {
+    const data = await userService.post(req.body);
 
     return { data };
   },

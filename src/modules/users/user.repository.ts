@@ -12,4 +12,15 @@ export class UserRepository {
 
     return result.rows;
   }
+
+  async save(payload: { name: string }) {
+    const result = await this.db.query<{
+      id: number;
+      name: string;
+    }>(`INSERT INTO public.users (name) VALUES ($1) RETURNING id, name`, [
+      payload.name,
+    ]);
+
+    return result.rows[0];
+  }
 }

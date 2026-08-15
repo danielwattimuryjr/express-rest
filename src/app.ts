@@ -3,6 +3,8 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import { xss } from 'express-xss-sanitizer';
 import helmet from 'helmet';
+import { notFoundController } from './common/http/notFoundController.ts';
+import errorHandler from './common/middleware/errorHandler.ts';
 import config from './configuration/config.ts';
 import morgan from './configuration/morgan.ts';
 import router from './routes/v1/index.ts';
@@ -26,5 +28,7 @@ app.use(compression());
 app.use(cors());
 
 app.use('/api/v1', router);
+app.use('*fallback', notFoundController);
+app.use(errorHandler);
 
 export default app;
