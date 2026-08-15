@@ -1,0 +1,26 @@
+# Top-most EditorConfig file - stops looking upward for configurations
+root = true
+
+# Global settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# TypeScript and JavaScript specific overrides
+[*.{ts,tsx,js,jsx}]
+indent_style = space
+indent_size = 2
+quote_type = single
+
+# JSON configuration files (e.g., tsconfig.json, package.json)
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Markdown documentation files (preserves trailing spaces for line breaks)
+[*.md]
+trim_trailing_whitespace = false
