@@ -12,4 +12,17 @@ export class UserRepository {
 
     return result.rows;
   }
+
+  async create(payload: { name: string; email: string }) {
+    const result = await this.db.query<{
+      id: number;
+      name: string;
+      email: string;
+    }>(
+      `INSERT INTO public.users (name, email) VALUES ($1, $2) RETURNING id, name, email`,
+      [payload.name, payload.email],
+    );
+
+    return result.rows[0];
+  }
 }
