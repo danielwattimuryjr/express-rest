@@ -3,6 +3,7 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import { xss } from 'express-xss-sanitizer';
 import helmet from 'helmet';
+import errorHandler from './common/middleware/errorHandler.ts';
 import config from './configuration/config.ts';
 import morgan from './configuration/morgan.ts';
 import router from './routes/v1/index.ts';
@@ -26,5 +27,7 @@ app.use(compression());
 app.use(cors());
 
 app.use('/api/v1', router);
+
+app.use(errorHandler);
 
 export default app;
