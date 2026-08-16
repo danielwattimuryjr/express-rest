@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import type { UserRepository } from './user.repository.ts';
 import type { UserRequestType } from './user.schema.ts';
 
@@ -10,7 +11,15 @@ export class UserService {
   }
 
   async post(request: UserRequestType) {
-    const users = await this.userRepository.save(request);
+    const hashedPassword = await bcrypt.hash(request.password, 12);
+    const users = await this.userRepository.save({
+      ...request,
+      password: hashedPassword,
+    });
     return users;
+  }
+
+  async getOne(userId: number) {
+    return await this.userRepository.findById(userId);
   }
 }

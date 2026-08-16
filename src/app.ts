@@ -3,10 +3,12 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import { xss } from 'express-xss-sanitizer';
 import helmet from 'helmet';
+import passport from 'passport';
 import { notFoundController } from './common/http/notFoundController.ts';
 import errorHandler from './common/middleware/errorHandler.ts';
 import config from './configuration/config.ts';
 import morgan from './configuration/morgan.ts';
+import { jwtStrategy } from './configuration/passport.ts';
 import router from './routes/v1/index.ts';
 
 const app: Express = express();
@@ -26,6 +28,8 @@ app.use(xss());
 app.use(compression());
 
 app.use(cors());
+
+passport.use(jwtStrategy);
 
 app.use('/api/v1', router);
 app.use('*fallback', notFoundController);

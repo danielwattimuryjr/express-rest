@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import config from './config.ts';
 
 export const pool = new Pool({
@@ -8,3 +8,5 @@ export const pool = new Pool({
   user: config.POSTGRES_USER,
   password: config.POSTGRES_PASSWORD,
 });
+
+export type Database = Pool | PoolClient;

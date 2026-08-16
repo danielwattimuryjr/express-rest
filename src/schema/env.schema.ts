@@ -11,13 +11,35 @@ export const envSchema = z.object({
     .transform((val) => Number(val))
     .pipe(z.number().int().min(1).max(65535)),
 
-  POSTGRES_USER: z.string().min(1, 'PGUSER is required'),
-  POSTGRES_PASSWORD: z.string().min(1, 'PGPASSWORD is required'),
-  POSTGRES_HOST: z.string().min(1, 'PGHOST is required'),
+  POSTGRES_USER: z.string().min(1, 'POSTGRES_USER is required'),
+  POSTGRES_PASSWORD: z.string().min(1, 'POSTGRES_PASSWORD is required'),
+  POSTGRES_HOST: z.string().min(1, 'POSTGRES_HOST is required'),
   POSTGRES_PORT: z
     .string()
-    .min(1, 'PGPORT is required')
+    .min(1, 'POSTGRES_PORT is required')
     .transform((val) => Number(val))
     .pipe(z.number().int().min(1).max(65535)),
-  POSTGRES_DB: z.string().min(1, 'PGDATABASE is required'),
+  POSTGRES_DB: z.string().min(1, 'POSTGRES_DB is required'),
+
+  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+  JWT_ACCESS_EXPIRATION_MINUTES: z
+    .string()
+    .default('30')
+    .transform((val) => Number(val))
+    .pipe(z.number().int().min(1)),
+  JWT_REFRESH_EXPIRATION_DAYS: z
+    .string()
+    .default('7')
+    .transform((val) => Number(val))
+    .pipe(z.number().int().min(1)),
+  JWT_RESET_PASSWORD_EXPIRATION_MINUTES: z
+    .string()
+    .default('30')
+    .transform((val) => Number(val))
+    .pipe(z.number().int().min(1)),
+  JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: z
+    .string()
+    .default('30')
+    .transform((val) => Number(val))
+    .pipe(z.number().int().min(1)),
 });
