@@ -26,7 +26,11 @@ const verifyCallback: VerifyCallback = async (
     return done(null, false);
   }
 
-  return done(null, user);
+  return done(null, {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+  });
 };
 
 export const jwtStrategy = new JwtStrategy(jwtOptions, verifyCallback);
