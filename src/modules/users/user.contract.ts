@@ -1,3 +1,4 @@
+import type { RoleEnum } from '../../common/enums/RoleEnum.ts';
 import type { RouteDefinition } from '../../common/types/route.ts';
 import { type UserRequestType, type UserResponseType } from './user.schema.ts';
 
@@ -7,7 +8,8 @@ export type GetAllUsersRoute = RouteDefinition<
   'get',
   '',
   {
-    type: 'authenticated';
+    type: 'role';
+    values: [RoleEnum.ADMIN];
   },
   false,
   any,
@@ -18,7 +20,8 @@ export type PostUserRoute = RouteDefinition<
   'post',
   '',
   {
-    type: 'authenticated';
+    type: 'role';
+    values: [RoleEnum.ADMIN];
   },
   true,
   UserRequestType,

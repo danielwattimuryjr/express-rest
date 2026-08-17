@@ -3,6 +3,8 @@ import type {
   LoginRequestType,
   LoginResponseType,
   RefeshResponseType,
+  RegisterRequestType,
+  RegisterResponseType,
 } from './auth.schema.ts';
 
 export type UseAuthRoute = RouteDefinition<'use', '/auth'>;
@@ -23,4 +25,13 @@ export type PostRefreshRoute = RouteDefinition<
   false,
   undefined,
   RefeshResponseType
+>;
+
+export type PostRegisterRoute = RouteDefinition<
+  'post',
+  '/register',
+  false,
+  true,
+  RegisterRequestType,
+  RegisterResponseType
 >;

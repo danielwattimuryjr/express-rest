@@ -1,5 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import config from '../../configuration/config.ts';
+import HttpDatabaseConflictError from '../errors/HttpDatabaseConflictError.ts';
+import HttpDatabaseError from '../errors/HttpDatabaseError.ts';
 import HttpForbiddenError from '../errors/HttpForbiddenError.ts';
 import HttpNotFoundError from '../errors/HttpNotFoundError.ts';
 import HttpUnauthorizedError from '../errors/HttpUnauthorizedError.ts';
@@ -28,6 +31,16 @@ export function errorHandler(
     response.code = err.code;
   } else if (HttpForbiddenError.isError(err)) {
     response.code = err.code;
+  } else if (HttpDatabaseConflictError.isError(err)) {
+    response.code = err.code;
+    if (config.NODE_ENV !== 'production') {
+      response.data = err.data;
+    }
+  } else if (HttpDatabaseError.isError(err)) {
+    response.code = err.code;
+    if (config.NODE_ENV !== 'production') {
+      response.data = err.data;
+    }
   } else {
     response.message = 'Unknown error';
     console.log(err.stack);

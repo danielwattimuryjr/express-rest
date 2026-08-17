@@ -1,3 +1,4 @@
+import { RoleEnum } from '../../common/enums/RoleEnum.ts';
 import { controller } from '../../common/http/controller.ts';
 import type { GetAllUsersRoute, PostUserRoute } from './user.contract.ts';
 import { userRequest } from './user.schema.ts';
@@ -7,7 +8,10 @@ export const getAllUsersController = controller<GetAllUsersRoute>(
   'get',
   '',
   false,
-  false,
+  {
+    type: 'role',
+    values: [RoleEnum.ADMIN],
+  },
   async () => {
     const data = await UserService.getAllUsers();
 
@@ -20,7 +24,8 @@ export const postUsersController = controller<PostUserRoute>(
   '',
   userRequest(),
   {
-    type: 'authenticated',
+    type: 'role',
+    values: [RoleEnum.ADMIN],
   },
   async (req) => {
     const data = await UserService.createUser(req.body);

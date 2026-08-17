@@ -4,6 +4,7 @@ import type { UseAuthRoute } from './auth.contracts.ts';
 import {
   postLoginController,
   postRefreshController,
+  postRegisterController,
 } from './auth.controller.ts';
 
 const authRouter = Router();
@@ -12,6 +13,7 @@ authRouter.use(
     '/auth',
     postLoginController,
     postRefreshController,
+    postRegisterController,
   ),
 );
 

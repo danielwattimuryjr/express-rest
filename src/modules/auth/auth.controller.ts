@@ -1,7 +1,11 @@
 import { extractBearerToken } from '../../common/helper/extractBearerToken.ts';
 import { controller } from '../../common/http/controller.ts';
-import type { PostLoginRoute, PostRefreshRoute } from './auth.contracts.ts';
-import { loginRequest } from './auth.schema.ts';
+import type {
+  PostLoginRoute,
+  PostRefreshRoute,
+  PostRegisterRoute,
+} from './auth.contracts.ts';
+import { loginRequest, registerRequest } from './auth.schema.ts';
 import { AuthService } from './auth.service.ts';
 
 export const postLoginController = controller<PostLoginRoute>(
@@ -34,6 +38,20 @@ export const postRefreshController = controller<PostRefreshRoute>(
         accessToken,
         refreshToken: newRefreshToken,
       },
+    };
+  },
+);
+
+export const postRegisterController = controller<PostRegisterRoute>(
+  'post',
+  '/register',
+  registerRequest(),
+  false,
+  async (req) => {
+    const user = await AuthService.register(req.body);
+
+    return {
+      data: user,
     };
   },
 );
