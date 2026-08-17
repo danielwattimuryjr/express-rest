@@ -1,3 +1,4 @@
+import type { RoleEnum } from '../enums/RoleEnum.ts';
 import type { BodyMethod, ContentType, HttpMethod, Query } from './http.ts';
 
 export interface ParamsDictionary {
@@ -31,10 +32,30 @@ type RouteParams<TRoute extends string | undefined> = string extends TRoute
         ? undefined
         : {};
 
+export type AuthorizationPolicy =
+  | RoleAuthorizationPolicy
+  // | PermissionAuthorizationPolicy
+  | {
+      type: 'authenticated';
+    }
+  | false;
+
+type RoleAuthorizationPolicy = {
+  type: 'role';
+  values: RoleEnum[];
+  mode?: 'any' | 'all';
+};
+
+type PermissionAuthorizationPolicy = {
+  type: 'permission';
+  values: string[];
+  mode?: 'any' | 'all';
+};
+
 export type RouteDefinition<
   TMethod extends HttpMethod,
   TPath extends string = string,
-  //   TAuthPermission extends Permissions | SpecialPermission = '-Public-',
+  TAuthPolicy extends AuthorizationPolicy = false,
   TSchema extends true | false = false,
   TBody = any,
   TResponse = any,
@@ -43,7 +64,7 @@ export type RouteDefinition<
 > = {
   method: TMethod;
   path: TPath;
-  //   permission: TMethod extends 'use' ? false : TAuthPermission;
+  authorizationPolicy: TAuthPolicy;
   response: TMethod extends 'use' ? undefined : TResponse;
   request: TMethod extends 'post' | 'put' | 'patch' ? TBody : undefined;
   query: TMethod extends 'use' ? undefined : TQuery;
@@ -55,6 +76,7 @@ export type RouteDefinition<
 export type AnyRoute = RouteDefinition<
   HttpMethod,
   string,
+  AuthorizationPolicy,
   true | false,
   unknown,
   unknown,

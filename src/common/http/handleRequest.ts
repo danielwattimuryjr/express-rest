@@ -1,4 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
 import type { ControllerHandler } from '../types/controller.ts';
 import type { HttpRequest, HttpResponse } from '../types/http.ts';
 import type { AnyRoute } from '../types/route.ts';
@@ -26,7 +27,7 @@ export function requestHandler<TRoute extends AnyRoute>(
     )
       .then((result) => {
         const defaultResponse: Omit<HttpResponse<undefined>, 'data'> = {
-          code: 200,
+          code: StatusCodes.OK,
           message: 'success',
         };
         if (controllerDidRespond<TRoute['response']>(result)) {

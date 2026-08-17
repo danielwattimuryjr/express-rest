@@ -6,6 +6,9 @@ export type UseUsersRoute = RouteDefinition<'use', '/users'>;
 export type GetAllUsersRoute = RouteDefinition<
   'get',
   '',
+  {
+    type: 'authenticated';
+  },
   false,
   any,
   UserResponseType[]
@@ -14,6 +17,9 @@ export type GetAllUsersRoute = RouteDefinition<
 export type PostUserRoute = RouteDefinition<
   'post',
   '',
+  {
+    type: 'authenticated';
+  },
   true,
   UserRequestType,
   UserResponseType

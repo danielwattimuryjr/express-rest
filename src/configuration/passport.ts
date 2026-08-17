@@ -4,9 +4,9 @@ import {
   type VerifiedCallback,
   type VerifyCallback,
 } from 'passport-jwt';
-import { TokenTypeEnum } from '../common/enums/token.ts';
+import { TokenTypeEnum } from '../common/enums/TokenTypeEnum.ts';
 import type { CustomJwtPayload } from '../common/types/token.ts';
-import { userService } from '../modules/users/user.module.ts';
+import { UserService } from '../modules/users/user.service.ts';
 import config from './config.ts';
 
 const jwtOptions = {
@@ -21,7 +21,7 @@ const verifyCallback: VerifyCallback = async (
   if (payload.type !== TokenTypeEnum.ACCESS) {
     return done(null, false);
   }
-  const user = await userService.getOne(Number(payload.sub));
+  const user = await UserService.getOne(Number(payload.sub));
   if (!user) {
     return done(null, false);
   }

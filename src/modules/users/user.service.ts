@@ -1,25 +1,26 @@
 import bcrypt from 'bcryptjs';
-import type { UserRepository } from './user.repository.ts';
+import { RoleEnum } from '../../common/enums/RoleEnum.ts';
+import { RoleRepository } from '../roles/role.repository.ts';
+import { UserRepository } from './user.repository.js';
 import type { UserRequestType } from './user.schema.ts';
 
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
-
-  async getAll() {
-    const users = await this.userRepository.getAll();
+  static async getAllUsers() {
+    const users = await UserRepository.findAll();
     return users;
   }
 
-  async post(request: UserRequestType) {
+  static async createUser(request: UserRequestType) {
     const hashedPassword = await bcrypt.hash(request.password, 12);
-    const users = await this.userRepository.save({
+    const user = await UserRepository.save({
       ...request,
       password: hashedPassword,
     });
-    return users;
+    await RoleRepository.setRoles(user.id, [RoleEnum.USER]);
+    return user;
   }
 
-  async getOne(userId: number) {
-    return await this.userRepository.findById(userId);
+  static async getOne(userId: number) {
+    return await UserRepository.findById(userId);
   }
 }

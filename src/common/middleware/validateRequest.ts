@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
-import type { ZodType } from 'zod';
+import { z, type ZodType } from 'zod';
+import { HttpValidationError } from '../errors/HttpValidationError.ts';
 
 export const validateRequestBodyMiddleware = (
   schema?: ZodType | false,
@@ -13,7 +14,9 @@ export const validateRequestBodyMiddleware = (
       req.body = parsed;
       return next();
     } catch (err) {
-      return next(err);
+      if (err instanceof z.ZodError) {
+        throw new HttpValidationError('Validation failed', err.issues);
+      }
     }
   };
 };

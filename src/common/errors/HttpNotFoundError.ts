@@ -1,14 +1,24 @@
-import type { HttpErrorOptions } from './HttpError.ts';
-import { HttpError } from './HttpError.ts';
+import { StatusCodes } from 'http-status-codes';
 
-export class HttpNotFoundError extends HttpError {
-  constructor(message = 'Not Found', options: HttpErrorOptions = {}) {
-    super(message, {
-      ...options,
-      statusCode: 404,
-      safeMessage: options.safeMessage ?? 'Not Found',
-    });
-    this.name = 'NotFoundError';
+export class HttpNotFoundError extends Error {
+  static readonly name = 'NotFoundError';
+  static readonly code = StatusCodes.NOT_FOUND;
+
+  name = HttpNotFoundError.name;
+  code: StatusCodes;
+  url: string | undefined;
+
+  constructor(message?: string, url?: string) {
+    super(message ?? 'Resource not found');
+    this.code = HttpNotFoundError.code;
+    this.url = url;
+  }
+
+  static isError(err: unknown): err is HttpNotFoundError {
+    if (err && err instanceof Error) {
+      return err.name === HttpNotFoundError.name;
+    }
+    return false;
   }
 }
 

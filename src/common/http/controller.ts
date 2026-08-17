@@ -1,5 +1,6 @@
 import { Router, type RequestHandler } from 'express';
 import { ZodType } from 'zod';
+import { checkUserPermissionMiddleware } from '../middleware/checkUserPermissionMiddleware.ts';
 import { validateRequestBodyMiddleware } from '../middleware/validateRequest.ts';
 import type { ControllerHandler } from '../types/controller.ts';
 import type { AnyRoute } from '../types/route.ts';
@@ -9,14 +10,14 @@ export function controller<TRoute extends AnyRoute>(
   method: TRoute['method'],
   path: TRoute['path'],
   validate: TRoute['schema'] extends true ? ZodType : false,
+  authPolicy: TRoute['authorizationPolicy'],
   fn: ControllerHandler<TRoute>,
   contentType: TRoute['mimeType'] = 'application/json',
 ): RequestHandler {
   const router = Router();
-
   router[method](
     path,
-    //   checkUserPermissionMiddleware(permission),
+    checkUserPermissionMiddleware(authPolicy),
     validateRequestBodyMiddleware(validate),
     requestHandler(fn, contentType),
   );

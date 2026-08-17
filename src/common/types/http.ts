@@ -1,4 +1,5 @@
 import type { Request } from 'express';
+import type { StatusCodes } from 'http-status-codes';
 import type { ParamsDictionary } from './route.ts';
 
 export type HttpMethod =
@@ -45,10 +46,10 @@ export type HttpRequest<
 export type HttpResponse<TData> = TData extends undefined
   ? {
       message: string;
-      code: number;
+      code: StatusCodes;
     }
   : {
       message: string;
-      code: number;
+      code: StatusCodes;
       data: TData;
     };

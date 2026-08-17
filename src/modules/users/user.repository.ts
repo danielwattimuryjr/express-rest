@@ -1,11 +1,9 @@
-import type { Database } from '../../configuration/postgres.ts';
+import { db } from '../../configuration/postgres.ts';
 import type { User } from './user.entity.ts';
 
 export class UserRepository {
-  constructor(private readonly db: Database) {}
-
-  async getAll(): Promise<Omit<User, 'password'>[]> {
-    const result = await this.db.query<Omit<User, 'password'>>(
+  static async findAll(): Promise<User[]> {
+    const result = await db.query<User>(
       `SELECT
       id,
       email,
@@ -18,8 +16,8 @@ FROM auth.users`,
     return result.rows;
   }
 
-  async findById(id: number): Promise<Omit<User, 'password'>> {
-    const result = await this.db.query<Omit<User, 'password'>>(
+  static async findById(id: number): Promise<User> {
+    const result = await db.query<User>(
       `SELECT
       id,
       email,
@@ -35,14 +33,14 @@ LIMIT 1`,
     return result.rows[0];
   }
 
-  async save(payload: {
+  static async save(payload: {
     firstName: string;
     lastName?: string;
     email: string;
     username: string;
     password: string;
-  }): Promise<Omit<User, 'password'>> {
-    const result = await this.db.query<Omit<User, 'password'>>(
+  }): Promise<User> {
+    const result = await db.query<User>(
       `INSERT INTO auth.users (
   first_name,
   last_name,
@@ -68,14 +66,16 @@ RETURNING
     return result.rows[0];
   }
 
-  async findByEmail(email: string): Promise<User> {
-    const result = await this.db.query<User>(
+  static async findByEmail(
+    email: string,
+  ): Promise<User & { password: string }> {
+    const result = await db.query<User & { password: string }>(
       `SELECT
       id,
       email,
-      password,
       first_name AS "firstName",
       last_name AS "lastName",
+      password,
       username
 FROM auth.users
 WHERE email = $1

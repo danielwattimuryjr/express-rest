@@ -11,4 +11,4 @@ export const userRequest = () =>
   });
 
 export type UserRequestType = z.infer<ReturnType<typeof userRequest>>;
-export type UserResponseType = Omit<User, 'password'>;
+export type UserResponseType = User;

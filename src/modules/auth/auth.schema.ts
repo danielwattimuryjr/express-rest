@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+type TokenPair = {
+  accessToken: string;
+  refreshToken: string;
+};
+
 export const loginRequest = () =>
   z.object({
     email: z.email().min(1, 'Email is required'),
@@ -7,7 +12,6 @@ export const loginRequest = () =>
   });
 
 export type LoginRequestType = z.infer<ReturnType<typeof loginRequest>>;
-export type LoginResponseType = {
-  accessToken: string;
-  refreshToken: string;
-};
+export type LoginResponseType = TokenPair;
+
+export type RefeshResponseType = TokenPair;

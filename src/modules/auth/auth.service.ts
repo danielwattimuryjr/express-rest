@@ -1,29 +1,17 @@
 import bcrypt from 'bcryptjs';
 import moment from 'moment';
-import { TokenTypeEnum } from '../../common/enums/token.ts';
-import HttpBadCredentialsError from '../../common/errors/HttpBadCredentialsError.ts';
+import { TokenTypeEnum } from '../../common/enums/TokenTypeEnum.ts';
+import HttpUnauthorizedError from '../../common/errors/HttpUnauthorizedError.ts';
 import config from '../../configuration/config.ts';
-import { jwtService } from '../jwt/jwt.module.ts';
-import { refreshTokenRepository } from '../refreshToken/refreshToken.module.ts';
-import { userRepository } from '../users/user.module.ts';
+import { JwtService } from '../jwt/jwt.service.ts';
+import { RefreshTokenRepository } from '../refreshToken/refreshToken.repository.ts';
+import type { User } from '../users/user.entity.ts';
+import { UserRepository } from '../users/user.repository.ts';
 import type { LoginRequestType } from './auth.schema.ts';
 
 export class AuthService {
-  async login(request: LoginRequestType) {
-    const user = await userRepository.findByEmail(request.email);
-    if (!user) {
-      throw new HttpBadCredentialsError();
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      request.password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new HttpBadCredentialsError();
-    }
-
-    const accessToken = jwtService.generateToken(
+  private static async generateTokenPair(user: User) {
+    const accessToken = JwtService.generateToken(
       user,
       moment().add(config.JWT_ACCESS_EXPIRATION_MINUTES, 'minutes'),
       TokenTypeEnum.ACCESS,
@@ -33,12 +21,12 @@ export class AuthService {
       config.JWT_REFRESH_EXPIRATION_DAYS,
       'days',
     );
-    const refreshToken = jwtService.generateToken(
+    const refreshToken = JwtService.generateToken(
       user,
       refreshTokenExpires,
       TokenTypeEnum.REFRESH,
     );
-    const savedRefreshToken = await refreshTokenRepository.save(
+    const savedRefreshToken = await RefreshTokenRepository.save(
       refreshToken,
       user.id,
       refreshTokenExpires.toDate(),
@@ -47,6 +35,48 @@ export class AuthService {
     return {
       accessToken,
       refreshToken: savedRefreshToken.token,
+    };
+  }
+
+  static async login(request: LoginRequestType) {
+    const user = await UserRepository.findByEmail(request.email);
+    if (!user) {
+      throw new HttpUnauthorizedError();
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      request.password,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new HttpUnauthorizedError();
+    }
+
+    const { accessToken, refreshToken } = await this.generateTokenPair(user);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  static async refresh(refreshToken: string) {
+    const payload = JwtService.verifyToken(refreshToken, TokenTypeEnum.REFRESH);
+    const userId = Number(payload.sub);
+
+    RefreshTokenRepository.revokeToken(refreshToken, userId);
+
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+      throw new HttpUnauthorizedError();
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.generateTokenPair(user);
+
+    return {
+      accessToken,
+      newRefreshToken,
     };
   }
 }
