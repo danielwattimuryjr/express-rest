@@ -30,7 +30,7 @@ export const postRefreshController = controller<PostRefreshRoute>(
   async (req) => {
     const refreshToken = extractBearerToken(req.headers.authorization);
 
-    const { accessToken, newRefreshToken } =
+    const { accessToken, refreshToken: newRefreshToken } =
       await AuthService.refresh(refreshToken);
 
     return {

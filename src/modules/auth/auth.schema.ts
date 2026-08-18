@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { User } from '../users/user.entity.ts';
 
-type TokenPair = {
+export type TokenPair = {
   accessToken: string;
   refreshToken: string;
 };
@@ -25,4 +25,7 @@ export const registerRequest = () =>
     password: z.string().min(1, 'Password is required'),
   });
 export type RegisterRequestType = z.infer<ReturnType<typeof registerRequest>>;
-export type RegisterResponseType = User;
+export type RegisterResponseType = Omit<
+  User,
+  'roles' | 'password' | 'refreshTokens'
+>;

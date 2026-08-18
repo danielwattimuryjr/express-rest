@@ -13,10 +13,20 @@ import { RefreshTokenRepository } from '../refreshToken/refreshToken.repository.
 import { Role } from '../roles/role.entity.ts';
 import { User } from '../users/user.entity.js';
 import { UserRepository } from '../users/user.repository.ts';
-import type { LoginRequestType, RegisterRequestType } from './auth.schema.ts';
+import type {
+  LoginRequestType,
+  LoginResponseType,
+  RefeshResponseType,
+  RegisterRequestType,
+  RegisterResponseType,
+  TokenPair,
+} from './auth.schema.ts';
 
 export class AuthService {
-  private static async generateTokenPair(user: User, manager?: EntityManager) {
+  private static async generateTokenPair(
+    user: User,
+    manager?: EntityManager,
+  ): Promise<TokenPair> {
     const accessToken = JwtService.generateToken(
       user,
       moment().add(config.JWT_ACCESS_EXPIRATION_MINUTES, 'minutes'),
@@ -50,7 +60,7 @@ export class AuthService {
     };
   }
 
-  static async login(request: LoginRequestType) {
+  static async login(request: LoginRequestType): Promise<LoginResponseType> {
     const user = await UserRepository.findOneOrFail({
       where: { email: request.email },
       select: {
@@ -81,16 +91,22 @@ export class AuthService {
     };
   }
 
-  static async register(request: RegisterRequestType) {
+  static async register(
+    request: RegisterRequestType,
+  ): Promise<RegisterResponseType> {
     const hashedPassword = await bcrypt.hash(request.password, 12);
 
     return AppDataSource.transaction(async (transactionalEntityManager) => {
       const userRepo = transactionalEntityManager.getRepository(User);
       const roleRepo = transactionalEntityManager.getRepository(Role);
 
-      const existingUser = await userRepo.findOneBy({ email: request.email });
+      const existingUser = await userRepo.findOne({
+        where: [{ email: request.email }, { username: request.username }],
+      });
       if (existingUser) {
-        throw new HttpDatabaseConflictError('Email already registered');
+        throw new HttpDatabaseConflictError(
+          'Email or username already registered',
+        );
       }
 
       const role = await roleRepo
@@ -107,12 +123,17 @@ export class AuthService {
 
       await userRepo.save(user);
 
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+      };
     });
   }
 
-  static async refresh(refreshToken: string) {
+  static async refresh(refreshToken: string): Promise<RefeshResponseType> {
     const payload = JwtService.verifyToken(refreshToken, TokenTypeEnum.REFRESH);
     const userId = Number(payload.sub);
 
@@ -145,7 +166,7 @@ export class AuthService {
 
       return {
         accessToken,
-        newRefreshToken,
+        refreshToken: newRefreshToken,
       };
     });
   }
