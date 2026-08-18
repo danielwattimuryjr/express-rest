@@ -16,7 +16,6 @@ const authenticateJwt = (
       'jwt',
       { session: false },
       (err: Error | null, user: Express.User | false, info: any) => {
-        console.log('passport result:', { err, user, info });
         if (err) return reject(err);
         if (!user) return reject(new HttpUnauthorizedError(info?.message));
         resolve(user);
