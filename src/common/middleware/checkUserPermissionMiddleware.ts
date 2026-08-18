@@ -1,5 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import passport from 'passport';
+import { In } from 'typeorm';
 import { RoleRepository } from '../../modules/roles/role.repository.ts';
 import HttpForbiddenError from '../errors/HttpForbiddenError.ts';
 import HttpUnauthorizedError from '../errors/HttpUnauthorizedError.ts';
@@ -39,10 +40,10 @@ export const checkUserPermissionMiddleware = (
       }
 
       if (policy.type === 'role') {
-        const hasRole = await RoleRepository.userHasRole(
-          user.id,
-          policy.values,
-        );
+        const hasRole = await RoleRepository.findOneBy({
+          users: { id: user.id },
+          id: In(policy.values),
+        });
 
         if (!hasRole) {
           return next(new HttpForbiddenError());
