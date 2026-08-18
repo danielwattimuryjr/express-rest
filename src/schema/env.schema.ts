@@ -21,6 +21,14 @@ export const envSchema = z.object({
     .pipe(z.number().int().min(1).max(65535)),
   POSTGRES_DB: z.string().min(1, 'POSTGRES_DB is required'),
 
+  REDIS_PASSWORD: z.string().min(1, 'REDIS_PASSWORD is required'),
+  REDIS_HOST: z.string().min(1, 'REDIS_HOST is required'),
+  REDIS_PORT: z
+    .string()
+    .min(1, 'REDIS_PORT is required')
+    .transform((val) => Number(val))
+    .pipe(z.number().int().min(1).max(65535)),
+
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   JWT_ACCESS_EXPIRATION_MINUTES: z
     .string()

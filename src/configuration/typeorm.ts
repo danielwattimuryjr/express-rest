@@ -18,4 +18,14 @@ export const AppDataSource = new DataSource({
   subscribers: [],
   migrations: [],
   namingStrategy: new SnakeNamingStrategy(),
+  cache: {
+    type: 'redis',
+    options: {
+      socket: {
+        host: config.REDIS_HOST,
+        port: 6379,
+      },
+      password: config.REDIS_PASSWORD,
+    },
+  },
 });

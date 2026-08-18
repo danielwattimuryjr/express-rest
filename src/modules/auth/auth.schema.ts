@@ -6,6 +6,8 @@ export type TokenPair = {
   refreshToken: string;
 };
 
+export type RefeshResponseType = TokenPair;
+
 export const loginRequest = () =>
   z.object({
     email: z.email().min(1, 'Email is required'),
@@ -13,8 +15,6 @@ export const loginRequest = () =>
   });
 export type LoginRequestType = z.infer<ReturnType<typeof loginRequest>>;
 export type LoginResponseType = TokenPair;
-
-export type RefeshResponseType = TokenPair;
 
 export const registerRequest = () =>
   z.object({
