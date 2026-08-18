@@ -1,18 +1,32 @@
 import bcrypt from 'bcryptjs';
 import moment from 'moment';
+import type { EntityManager } from 'typeorm';
 import { RoleEnum } from '../../common/enums/RoleEnum.ts';
 import { TokenTypeEnum } from '../../common/enums/TokenTypeEnum.ts';
+import HttpDatabaseConflictError from '../../common/errors/HttpDatabaseConflictError.ts';
 import HttpUnauthorizedError from '../../common/errors/HttpUnauthorizedError.ts';
 import config from '../../configuration/config.ts';
+import { AppDataSource } from '../../configuration/typeorm.ts';
 import { JwtService } from '../jwt/jwt.service.ts';
+import { RefreshToken } from '../refreshToken/refreshToken.entity.ts';
 import { RefreshTokenRepository } from '../refreshToken/refreshToken.repository.ts';
-import { RoleRepository } from '../roles/role.repository.ts';
-import type { User } from '../users/user.entity.ts';
+import { Role } from '../roles/role.entity.ts';
+import { User } from '../users/user.entity.js';
 import { UserRepository } from '../users/user.repository.ts';
-import type { LoginRequestType, RegisterRequestType } from './auth.schema.ts';
+import type {
+  LoginRequestType,
+  LoginResponseType,
+  RefeshResponseType,
+  RegisterRequestType,
+  RegisterResponseType,
+  TokenPair,
+} from './auth.schema.ts';
 
 export class AuthService {
-  private static async generateTokenPair(user: User) {
+  private static async generateTokenPair(
+    user: User,
+    manager?: EntityManager,
+  ): Promise<TokenPair> {
     const accessToken = JwtService.generateToken(
       user,
       moment().add(config.JWT_ACCESS_EXPIRATION_MINUTES, 'minutes'),
@@ -28,11 +42,17 @@ export class AuthService {
       refreshTokenExpires,
       TokenTypeEnum.REFRESH,
     );
-    const savedRefreshToken = await RefreshTokenRepository.save(
-      refreshToken,
-      user.id,
-      refreshTokenExpires.toDate(),
-    );
+
+    const repo = manager
+      ? manager.getRepository(RefreshToken)
+      : RefreshTokenRepository;
+
+    const savedRefreshToken = await repo.save({
+      token: refreshToken,
+      user: user,
+      expiresAt: refreshTokenExpires.toDate(),
+      revoked: false,
+    });
 
     return {
       accessToken,
@@ -40,11 +60,20 @@ export class AuthService {
     };
   }
 
-  static async login(request: LoginRequestType) {
-    const user = await UserRepository.findByEmail(request.email);
-    if (!user) {
+  static async login(request: LoginRequestType): Promise<LoginResponseType> {
+    const user = await UserRepository.findOneOrFail({
+      where: { email: request.email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+      },
+    }).catch(() => {
       throw new HttpUnauthorizedError();
-    }
+    });
 
     const isPasswordValid = await bcrypt.compare(
       request.password,
@@ -62,30 +91,83 @@ export class AuthService {
     };
   }
 
-  static async register(request: RegisterRequestType) {
-    const user = await UserRepository.save(request);
-    await RoleRepository.setRoles(user.id, [RoleEnum.USER]);
+  static async register(
+    request: RegisterRequestType,
+  ): Promise<RegisterResponseType> {
+    const hashedPassword = await bcrypt.hash(request.password, 12);
 
-    return user;
+    return AppDataSource.transaction(async (transactionalEntityManager) => {
+      const userRepo = transactionalEntityManager.getRepository(User);
+      const roleRepo = transactionalEntityManager.getRepository(Role);
+
+      const existingUser = await userRepo.findOne({
+        where: [{ email: request.email }, { username: request.username }],
+      });
+      if (existingUser) {
+        throw new HttpDatabaseConflictError(
+          'Email or username already registered',
+        );
+      }
+
+      const role = await roleRepo
+        .findOneByOrFail({ id: RoleEnum.USER })
+        .catch(() => {
+          throw new Error('Default role not found');
+        });
+
+      const user = userRepo.create({
+        ...request,
+        password: hashedPassword,
+        roles: [role],
+      });
+
+      await userRepo.save(user);
+
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+      };
+    });
   }
 
-  static async refresh(refreshToken: string) {
+  static async refresh(refreshToken: string): Promise<RefeshResponseType> {
     const payload = JwtService.verifyToken(refreshToken, TokenTypeEnum.REFRESH);
     const userId = Number(payload.sub);
 
-    RefreshTokenRepository.revokeToken(refreshToken, userId);
+    return AppDataSource.transaction(async (manager) => {
+      const existingRefreshToken = await manager
+        .findOneByOrFail(RefreshToken, {
+          token: refreshToken,
+          user: { id: userId },
+          revoked: false,
+        })
+        .catch(() => {
+          throw new HttpUnauthorizedError();
+        });
 
-    const user = await UserRepository.findById(userId);
-    if (!user) {
-      throw new HttpUnauthorizedError();
-    }
+      if (existingRefreshToken.expiresAt < new Date()) {
+        throw new HttpUnauthorizedError();
+      }
 
-    const { accessToken, refreshToken: newRefreshToken } =
-      await this.generateTokenPair(user);
+      existingRefreshToken.revoked = true;
+      await manager.save(existingRefreshToken);
 
-    return {
-      accessToken,
-      newRefreshToken,
-    };
+      const user = await manager
+        .findOneByOrFail(User, { id: userId })
+        .catch(() => {
+          throw new HttpUnauthorizedError();
+        });
+
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.generateTokenPair(user, manager);
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+      };
+    });
   }
 }

@@ -11,4 +11,7 @@ export const userRequest = () =>
   });
 
 export type UserRequestType = z.infer<ReturnType<typeof userRequest>>;
-export type UserResponseType = User;
+export type UserResponseType = Omit<
+  User,
+  'password' | 'roles' | 'refreshTokens'
+>;
