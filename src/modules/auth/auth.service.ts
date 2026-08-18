@@ -12,7 +12,6 @@ import { RefreshToken } from '../refreshToken/refreshToken.entity.ts';
 import { RefreshTokenRepository } from '../refreshToken/refreshToken.repository.ts';
 import { Role } from '../roles/role.entity.ts';
 import { User } from '../users/user.entity.js';
-import { UserRepository } from '../users/user.repository.ts';
 import type {
   LoginRequestType,
   LoginResponseType,
@@ -61,34 +60,40 @@ export class AuthService {
   }
 
   static async login(request: LoginRequestType): Promise<LoginResponseType> {
-    const user = await UserRepository.findOneOrFail({
-      where: { email: request.email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        firstName: true,
-        lastName: true,
-        username: true,
-      },
-    }).catch(() => {
-      throw new HttpUnauthorizedError();
+    return AppDataSource.transaction(async (transactionalEntityManager) => {
+      const userRepo = transactionalEntityManager.getRepository(User);
+
+      const user = await userRepo
+        .findOneOrFail({
+          where: { email: request.email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+          },
+        })
+        .catch(() => {
+          throw new HttpUnauthorizedError();
+        });
+
+      const isPasswordValid = await bcrypt.compare(
+        request.password,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new HttpUnauthorizedError();
+      }
+
+      const { accessToken, refreshToken } = await this.generateTokenPair(user);
+
+      return {
+        accessToken,
+        refreshToken,
+      };
     });
-
-    const isPasswordValid = await bcrypt.compare(
-      request.password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new HttpUnauthorizedError();
-    }
-
-    const { accessToken, refreshToken } = await this.generateTokenPair(user);
-
-    return {
-      accessToken,
-      refreshToken,
-    };
   }
 
   static async register(
